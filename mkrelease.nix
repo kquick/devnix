@@ -31,7 +31,7 @@ let
               gitsrcref = { name, url, rev }:
                 let splt = gitURLSplit url; in
                 { name = "${name}";
-                  value = { type = "github"; team = splt.team; repo = splt.repo; ref = rev; };
+                  value = githubsrc splt.team splt.repo rev;
                 };
               gtree = gitTreeSources 2 eachGitSrc gitTree;
             in builtins.listToAttrs gtree;
