@@ -53,7 +53,7 @@ let
   inputSpec = gitTree: gitTreeAdj: addSrcs: variant: params:
     let genVal = type: value: { inherit type value; emailresponsible = false; };
 
-        cfg = let r = params // { inherit variant; }; in dbg "cfg" r;
+        cfg = params // { inherit variant; };
 
         strVals = set:
             let genEnt = name: value: { inherit name;
@@ -92,7 +92,9 @@ let
                           } ];
                       freshURL = https://api.github.com/repos/commercialhaskell/all-cabal-hashes/tarball/hackage;
                       freshPeriod = builtins.toString (24 * 60 * 60); # seconds
-                  in withDefAttr [] srclst "freshHaskellHashes" mkFrshI;
+                  in withDefAttr []
+                     (hasDefAttr {} srclst "haskell-packages") "freshHaskellHashes"
+                     mkFrshI;
             in builtins.listToAttrs (aSrcs ++ gtSrcs ++ otherInps);
 
     in (strVals cfg) // sourceVals //
