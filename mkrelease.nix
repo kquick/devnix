@@ -11,7 +11,7 @@ mkRelease =
     , srcs ? {}
     , overrides ? {}
     }:
-  let
+let
 
   ghcver = parameters.ghcver or "ghc864";
   variant = parameters.variant or "master";
@@ -106,9 +106,10 @@ mkRelease =
         srcAttrList = mapAttrs mkSrcOvr prjSrcs;
     in builtins.listToAttrs srcAttrList;
 
-in builtins.listToAttrs
-    (map (n: {name = n; value = hpkgs."${n}"; })
-          (projectSourceTargetNames allProjectSources))
-   // overrides.global;
+  htargets = builtins.listToAttrs
+               (map (n: {name = n; value = hpkgs."${n}"; })
+                    (projectSourceTargetNames allProjectSources));
+
+in htargets // (overrides.global or {});
 
 }
