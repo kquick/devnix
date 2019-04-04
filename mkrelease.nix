@@ -18,7 +18,7 @@ let
 
   hpkgs =
     let hextends = withDefAttr hSources overrides "haskell-packages"
-                   (pkgs.lib.composeExtensions hSources);
+                   (hpkg: pkgs.lib.composeExtensions hSources (hpkg parameters));
     in pkgs.haskell.packages."${ghcver}".extend(hextends);
 
 
@@ -106,6 +106,8 @@ let
                (map (n: {name = n; value = hpkgs."${n}"; })
                     (projectSourceTargetNames allProjectSources));
 
-in htargets // (overrides.global or {});
+  globaltgts = withDefAttr {} overrides "global" (o: o parameters);
+
+in htargets // globaltgts;
 
 }
