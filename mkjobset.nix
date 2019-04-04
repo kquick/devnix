@@ -103,7 +103,14 @@ let
     let jss = jobsetSpec project gitTree gitTreeAdj addSrcs variant;
     in mapEachCombination jss parameters;
 
-  mkJobset = { pkgs, variant, gitTree, gitTreeAdj, addSrcs, project, parameters }:
+  mkJobset = { pkgs ? import <nixpkgs> {}
+             , variant ? "master"
+             , gitTree ? null
+             , gitTreeAdj ? null
+             , addSrcs ? {}: {}
+             , project
+             , parameters ? {}
+             }:
     jobset_list project variant parameters gitTree gitTreeAdj addSrcs;
 
   mkJobsetsDrv = pkgs: jslists:
