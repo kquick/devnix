@@ -12,8 +12,8 @@ it becomes fairly tedious to manage the nix environment.
 
 The devnix tooling is designed to make the latter situations easier.
 Simply create a ~config.nix~ that provides the high-level description
-and then invoke either the `mkRelease` or the `mkJobsetsDrv` and
-`mkJobset` functions with those descriptive inputs.  These will
+and then invoke either the ~mkRelease~ or the ~mkJobsetsDrv~ and
+~mkJobset~ functions with those descriptive inputs.  These will
 generate the appropriate definitions to use with ~nix-build~ or
 ~nix-shell~ to do local development work, and with the inclusion of a
 minimal JSON declarative file, these will also generate the jobsets
