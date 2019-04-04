@@ -1,0 +1,80 @@
+* devnix
+
+This is a set of nix functions that extend the regular nix
+specifications to provide enhanced support for a development
+environment.
+
+It's relatively easy to work on a single package under nix, and
+possibly even collect some dependencies, but when the number of
+dependencies grows, when some of those must either be changed or newer
+versions of them are needed, or when applying Hydra CI to the project,
+it becomes fairly tedious to manage the nix environment.
+
+The devnix tooling is designed to make the latter situations easier.
+Simply create a ~config.nix~ that provides the high-level description
+and then invoke either the `mkRelease` or the `mkJobsetsDrv` and
+`mkJobset` functions with those descriptive inputs.  These will
+generate the appropriate definitions to use with ~nix-build~ or
+~nix-shell~ to do local development work, and with the inclusion of a
+minimal JSON declarative file, these will also generate the jobsets
+needed for Hydra variants.
+
+** Status
+
+  The devnix tooling is currently functional.  Beta users are invited.
+  Attempts will be made to keep the existing interface stable while
+  adding new functionality, although they may change.
+
+***  Pending updates
+
+    * Better/more documentation
+    * Currently support is focused on Haskell packages; support for
+      other languages (e.g. Rust) should be possible in the near future.
+
+
+* Usage
+
+** With nix-shell
+
+   Pending...
+
+** With nix-build
+
+   Pending...
+
+** With hydra
+
+   Pending...
+
+   * Note that the devnix configurations can support the "GitTree"
+     input type.  This type is not available from standard Hydra, but
+     is available from https://github.com/kquick/hydra under the
+     "galois" branch.  This is a single file that can be dropped into
+     ~src/lib/Hydra/Plugins/~; it will recursively follow git
+     submodule specifications and generate a JSON file of the
+     repositories and the corresponding git submodule revision
+     references for those repositories.
+
+* FAQ
+
+** Why ~config.nix~ and not ~default.nix~?
+
+   There's no critical reason, but since the default.nix is
+   customarily used for the description of a single package, a
+   different name for the "project configuration" was chosen as the
+   recommendation.
+
+** Why not just use overlays?
+
+   Overlays are fine for global needs.  They are less useful in cases
+   like:
+
+    * Working on several different projects that have the same
+      dependencies but different versions of those dependencies.
+
+    * Needing different dependency versions for different compilers.
+
+    * Configuring Hydra.
+
+  The devnix configuration and utilities are designed to be used on a
+  per-project basis.

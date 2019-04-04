@@ -1,0 +1,13 @@
+.*.swp
+.cabal-sandbox
+.ghc.environment*
+cabal.sandbox.config
+deps
+config.json
+cabal.project.local
+dist
+dist-newstyle
+*~
+.DS_Store
+tags
+_darcs/
