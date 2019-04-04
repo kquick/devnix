@@ -61,12 +61,40 @@ rec {
           aset // { "${aprop}" = orig."${aname}"."${aprop}"; };
     in orig // upd // cau;
 
+  # ----------------------------------------------------------------------
+
   isSrcType = t: n: v: (v.type or "") == t;
 
   gitSources = srcs:
     let isGithub = isSrcType "github";
         # isGithub = n: v: srcs."${n}".type == "github";
     in filterAttrs isGithub srcs;
+
+  # gitURLSplit -- Given a URL git reference, split it into an attrset
+  # of base, team, repo, and subpath
+  #
+  gitURLSplit = url:
+    let sshSplt = builtins.split ":" url;
+        httpSplt = builtins.split "/" url;
+        base = if startsWith "git@" url
+               then builtins.elemAt sshSplt 0
+               else builtins.concatStringsSep "/" (elemsAt httpSplt [0 2 4]);
+        uri = if startsWith "git@" url
+              then builtins.elemAt sshSplt 2
+              else builtins.substring (builtins.stringLength base + 1) (builtins.stringLength url) url;
+        uriSplt = builtins.split "/" uri;
+        team = builtins.elemAt uriSplt 0;
+        repo = builtins.elemAt uriSplt 2;
+        pathElems = builtins.genList (n: 4 + (2 * n)) ((builtins.length uriSplt - 3) / 2);
+        path = builtins.concatStringsSep "/" (elemsAt uriSplt pathElems);
+    in { team = team; repo = repo; base = base; subpath = path; };
+
+  githubSrc = { team ? "GaloisInc", repo, ref ? "master" }:
+    githubSrcURL "https://api.github.com/repos/${team}/${repo}/tarball/${ref}";
+
+  githubSrcURL = url: builtins.fetchTarball { inherit url; };
+
+  # ----------------------------------------------------------------------
 
   dbg = n: v: builtins.trace (n + " ::") (builtins.trace v v);
 
@@ -87,35 +115,11 @@ rec {
   addTestTools = drv: xs:
     overrideCabal drv (drv: { testToolDepends = (drv.testToolDepends or []) ++ xs; });
 
-  githubSrcURL = url: builtins.fetchTarball { inherit url; };
-
   # elemsAt -- Given two lists, return only the elements of the first
   # referred to by the indices in the second.
 
   elemsAt = l: with builtins;
     let appI = a: i: let e = elemAt l i; in a ++ [e]; in foldl' appI [];
-
-  # gitURLSplit -- Given a URL git reference, split it into an attrset
-  # of base, team, repo, and subpath
-
-  gitURLSplit = url:
-    let sshSplt = builtins.split ":" url;
-        httpSplt = builtins.split "/" url;
-        base = if startsWith "git@" url
-               then builtins.elemAt sshSplt 0
-               else builtins.concatStringsSep "/" (elemsAt httpSplt [0 2 4]);
-        uri = if startsWith "git@" url
-              then builtins.elemAt sshSplt 2
-              else builtins.substring (builtins.stringLength base + 1) (builtins.stringLength url) url;
-        uriSplt = builtins.split "/" uri;
-        team = builtins.elemAt uriSplt 0;
-        repo = builtins.elemAt uriSplt 2;
-        pathElems = builtins.genList (n: 4 + (2 * n)) ((builtins.length uriSplt - 3) / 2);
-        path = builtins.concatStringsSep "/" (elemsAt uriSplt pathElems);
-    in { team = team; repo = repo; base = base; subpath = path; };
-
-  githubSrc = { team ? "GaloisInc", repo, ref ? "master" }:
-    githubSrcURL "https://api.github.com/repos/${team}/${repo}/tarball/${ref}";
 
   # gitTreeSources: For each element in the gitTree, call onEach with
   # { name; url; rev; } corresponding to the "repo name", the full
