@@ -63,6 +63,13 @@ rec {
 
   # ----------------------------------------------------------------------
 
+  githubsrc = team: repo: { type = "github"; inherit team repo; ref = "master";
+                            # optional: subpath = subdirectory to build under
+                            __functor = self: r: self // { ref = r; };
+  };
+
+  hackageVersion = version: { type = "hackageVersion"; inherit version; };
+
   isSrcType = t: n: v: (v.type or "") == t;
 
   gitSources = srcs:
