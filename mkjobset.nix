@@ -40,6 +40,11 @@ let
                       value = "https://github.com/NixOS/nixpkgs-channels nixos-unstable";  # KWQ
                       emailresponsible = false;
                     };
+                    devnix = {
+                      type = "git";
+                      value = "https://github.com/kquick/devnix";
+                      emailresponsible = false;
+                    };
                   }
                   // hasDefAttr {} project "extraReleaseInputs";
               };
