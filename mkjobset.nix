@@ -53,7 +53,7 @@ let
   inputSpec = gitTree: gitTreeAdj: addSrcs: variant: params:
     let genVal = type: value: { inherit type value; emailresponsible = false; };
 
-        cfg = params // { inherit variant; };
+        cfg = let r = params // { inherit variant; }; in dbg "cfg" r;
 
         strVals = set:
             let genEnt = name: value: { inherit name;
