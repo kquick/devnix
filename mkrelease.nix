@@ -13,7 +13,7 @@ mkRelease =
     }:
   let
 
-  ghcver = parameters.ghcver or "ghc863";
+  ghcver = parameters.ghcver or "ghc864";
   variant = parameters.variant or "master";
 
   hpkgs =
