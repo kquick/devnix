@@ -17,8 +17,9 @@ mkRelease =
   variant = parameters.variant or "master";
 
   hpkgs =
-    pkgs.haskell.packages."${ghcver}".extend(
-      (pkgs.lib.composeExtensions hSources overrides.haskell-packages));
+    let hextends = withDefAttr hSources overrides "haskell-packages"
+                   (pkgs.lib.composeExtensions hSources);
+    in pkgs.haskell.packages."${ghcver}".extend(hextends);
 
 
   # Alternative: construct the { type="git", ... } entry to match all the others.
@@ -44,10 +45,10 @@ mkRelease =
     in overridePropagatingAttrs [ "subpath" ] r o;
 
   allProjectSources =
-    let f = s: builtins.removeAttrs s [ "haskell-packages" ] // s.haskell-packages;
+    let f = s: builtins.removeAttrs s [ "haskell-packages" ] // (s.haskell-packages or {});
     in projectSources f;
 
-  haskellProjectSources = let f = s: s.haskell-packages; in projectSources f;
+  haskellProjectSources = let f = s: s.haskell-packages or {}; in projectSources f;
 
   isSrcURL = n: v: builtins.typeOf v == "string" && startsWith "https://" v;
 
