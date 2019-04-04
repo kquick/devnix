@@ -22,13 +22,9 @@ let
     in pkgs.haskell.packages."${ghcver}".extend(hextends);
 
 
-  # Alternative: construct the { type="git", ... } entry to match all the others.
   projectSources = f:
-    # Method 2: deconstruct URL to create a { type="git", ... } source
+    # deconstruct URL to create a githubsrc { type="git", ... } source
     # description.
-    #   + maintains context
-    #   - conversion away from url, with githubSrc moving back
-    #   - still need to reverse the "-src" added by gitTreeSources.
     let d = let
               eachGitSrc = if gitTreeAdj == null then gitsrcref
                            else a: gitsrcref (gitTreeAdj a);
@@ -95,8 +91,8 @@ let
           then { name = n; value = githubSrcURL v; }
           else { name = n; value = v; };
         githubOvr = n: v:
-          let ghsrc = githubSrc { inherit (v) team repo;
-                                  ref = v.ref or "master"; };
+          let ghsrc = githubSrcFetch { inherit (v) team repo;
+                                       ref = v.ref or "master"; };
               isrc = hasDefAttr (hasDefAttr ghsrc srcs n) srcs "${n}-src";
               extraArgs = withDefAttr "" v "subpath" mkSubpath;
               mkSubpath = p: "/" + p;

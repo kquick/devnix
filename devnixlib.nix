@@ -96,7 +96,7 @@ rec {
         path = builtins.concatStringsSep "/" (elemsAt uriSplt pathElems);
     in { team = team; repo = repo; base = base; subpath = path; };
 
-  githubSrc = { team ? "GaloisInc", repo, ref ? "master" }:
+  githubSrcFetch = { team ? "GaloisInc", repo, ref ? "master" }:
     githubSrcURL "https://api.github.com/repos/${team}/${repo}/tarball/${ref}";
 
   githubSrcURL = url: builtins.fetchTarball { inherit url; };
