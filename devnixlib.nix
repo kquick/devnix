@@ -108,6 +108,10 @@ rec {
         # isGithub = n: v: srcs."${n}".type == "github";
     in filterAttrs isGithub srcs;
 
+  pathSources = srcs:
+    let isPath = n: v: builtins.elem (builtins.typeOf v) [ "string" "path" ];
+    in filterAttrs isPath srcs;
+
   # gitURLSplit -- Given a URL git reference, split it into an attrset
   # of base, team, repo, and subpath
   #
