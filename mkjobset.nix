@@ -76,8 +76,8 @@ let
                     h = srclst.haskell-packages or {};
                 in mapAttrs genSrcInp (gitSources (r // h));
         genSrcInp = name: value:
-                      let urlVal = v: "${urlBase}${v.team}/${v.repo}.git ${v.ref or "master"}";
-                          urlBase = "https://github.com/";
+                      let urlVal = v: "${urlBase v}${v.team}/${v.repo}.git ${v.ref or "master"}";
+                          urlBase = v: v.urlBase or "https://github.com/";
                       in { name = "${name}-src";
                            value = genVal "git" (urlVal value);
                          };

@@ -63,8 +63,39 @@ rec {
 
   # ----------------------------------------------------------------------
 
+  # The githubsrc constructor creates an attrset that describes a
+  # remote github (or gitlab) source location for code.  The primary
+  # identification is "team" and "repo", which allows a reference to
+  # the github/gitlab repository to be constructed.
+  #
+  # Attributes:
+  #
+  #    * type :: "github"
+  #
+  #    * team :: "team name on github"
+  #
+  #    * repo :: "repository name on github"
+  #
+  #    * ref :: "reference to checkout"
+  #        -- a branch, tag, or commit hash.
+  #        -- Default = master
+  #
+  #    * subpath = "path in repository where build should occur"
+  #        -- optional
+  #
+  #    * urlBase = "alternate URL base string"
+  #        -- this is the prefix of the URL reference that will be generated
+  #        -- Default = "https://github.com/"
+  #        -- this can also be used to access private repositories:
+  #            1. create a no-password SSH key
+  #            2. install the public key as a deployment key in the repository
+  #            3. Update the .ssh/config to contain:
+  #                 Host foo-github
+  #                    HostName github.com
+  #                    User     git
+  #                    IdentityFile ~/.ssh/private-key
+  #            4. Set the urlBase here to "foo-github"
   githubsrc = team: repo: { type = "github"; inherit team repo; ref = "master";
-                            # optional: subpath = subdirectory to build under
                             __functor = self: r: self // { ref = r; };
   };
 
