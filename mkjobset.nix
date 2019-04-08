@@ -45,6 +45,11 @@ let
                       value = "https://github.com/kquick/devnix";
                       emailresponsible = false;
                     };
+                    hydraRun = {
+                      type = "boolean";
+                      value = "true";
+                      emailresponsible = false;
+                    };
                   }
                   // hasDefAttr {} project "extraReleaseInputs";
               };
