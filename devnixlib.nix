@@ -162,7 +162,11 @@ rec {
 
   # Based on similar functions (but not present in) pkgs.haskell.lib.
   addTestTools = drv: xs:
-    overrideCabal drv (drv: { testToolDepends = (drv.testToolDepends or []) ++ xs; });
+    overrideCabal drv (d: { testToolDepends = (d.testToolDepends or []) ++ xs; });
+
+  # Haskell packages are aggressively marked as broken, but there are
+  # some local overrides that can be applied.
+  notBroken = drv: overrideCabal drv (d: { broken = false; });
 
   # elemsAt -- Given two lists, return only the elements of the first
   # referred to by the indices in the second.
