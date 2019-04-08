@@ -131,8 +131,15 @@ rec {
         path = builtins.concatStringsSep "/" (elemsAt uriSplt pathElems);
     in { team = team; repo = repo; base = base; subpath = path; };
 
-  githubSrcFetch = { team ? "GaloisInc", repo, ref ? "master" }:
-    githubSrcURL "https://api.github.com/repos/${team}/${repo}/tarball/${ref}";
+  githubSrcFetch = ghs:  # ghs is the return from githubsrc
+    let base = ghs.urlBase or "https://github.com/";
+        refURL = "${base}${ghs.team}/${ghs.repo}";
+        url = if base == "https://github.com/"
+              then "https://api.github.com/repos/${ghs.team}/${ghs.repo}/tarball/${ghs.ref}"
+              else throw ("devnixlib: Do not know how to fetch tarball from: ${refURL}" +
+                          "; probably a private url, try a \"local\" override");
+        getTheURL = githubSrcURL url;
+    in getTheURL;
 
   githubSrcURL = url: builtins.fetchTarball { inherit url; };
 

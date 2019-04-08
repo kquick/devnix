@@ -80,6 +80,8 @@ let
     let mkSrcOvr = n: s:
           if builtins.typeOf s == "string"
           then stringOvr n s
+          else if builtins.typeOf s == "path"
+          then { name = n; value = s; }
           else
           if s.type == "github"
           then githubOvr n s
@@ -91,14 +93,13 @@ let
           then { name = n; value = githubSrcURL v; }
           else { name = n; value = v; };
         githubOvr = n: v:
-          let ghsrc = githubSrcFetch { inherit (v) team repo;
-                                       ref = v.ref or "master"; };
+          let ghsrc = githubSrcFetch ({ ref = "master"; } // v);
               isrc = hasDefAttr (hasDefAttr ghsrc srcs n) srcs "${n}-src";
               extraArgs = withDefAttr "" v "subpath" mkSubpath;
               mkSubpath = p: "/" + p;
               asPath = x: { string = x; path = /. + x; }."${builtins.typeOf x}";
               r = { name = n; value = asPath (isrc + extraArgs); };
-          in r;
+          in if builtins.hasAttr "local" v then stringOvr n v.local else r;
         srcAttrList = mapAttrs mkSrcOvr prjSrcs;
     in builtins.listToAttrs srcAttrList;
 
