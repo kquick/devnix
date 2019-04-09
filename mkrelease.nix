@@ -100,7 +100,7 @@ let
               mkSubpath = p: "/" + p;
               asPath = x: { string = x; path = /. + x; }."${builtins.typeOf x}";
               r = { name = n; value = asPath (isrc + extraArgs); };
-          in if !hydraRun && builtins.hasAttr "local" v then stringOvr n v.local else r;
+          in if !hydraRun && builtins.hasAttr "local" v then stringOvr n (v.local + extraArgs) else r;
         srcAttrList = mapAttrs mkSrcOvr prjSrcs;
     in builtins.listToAttrs srcAttrList;
 
