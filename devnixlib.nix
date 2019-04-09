@@ -136,6 +136,10 @@ rec {
         refURL = "${base}${ghs.team}/${ghs.repo}";
         url = if base == "https://github.com/"
               then "https://api.github.com/repos/${ghs.team}/${ghs.repo}/tarball/${ghs.ref}"
+              else
+              let anyGitlab = builtins.match "https://(.*gitlab[^/]*/).*" base; in
+              if anyGitlab != null && builtins.length anyGitlab == 1
+              then "https://${builtins.elemAt anyGitlab 0}${ghs.team}/${ghs.repo}/-/archive/${ghs.ref}/${ghs.repo}-${ghs.ref}.tar.bz2"
               else throw ("devnixlib: Do not know how to fetch tarball from: ${refURL}" +
                           "; probably a private url, try a \"local\" override");
         getTheURL = githubSrcURL url;
