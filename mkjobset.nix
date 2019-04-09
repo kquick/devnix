@@ -131,7 +131,7 @@ let
              , gitTree ? null
              , gitTreeAdj ? null
              , addSrcs ? {}: {}
-             , inpAdj ? x: x
+             , inpAdj ? cfg: x: x
              , project
              , parameters ? {}
              }:
