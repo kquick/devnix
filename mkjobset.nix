@@ -14,7 +14,7 @@ let
     let json = builtins.fromJSON (builtins.readFile decl-file);
         stdinps = [ "project" "nixpkgs" "hydra-jobsets" "devnix" ];
         ei = builtins.removeAttrs json.inputs stdinps;
-    in gitProject j.inputs.project.value //
+    in gitProject json.inputs.project.value //
        {
          entrypoint = json.nixexprpath;
          extraReleaseInputs = ei;
