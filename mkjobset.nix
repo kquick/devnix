@@ -20,7 +20,7 @@ let
          extraReleaseInputs = ei;
        };
 
-  jobsetSpec = project: gitTree: gitTreeAdj: addSrcs: variant: params:
+  jobsetSpec = project: gitTree: gitTreeAdj: addSrcs: inpAdj: variant: params:
     let name = builtins.concatStringsSep "-" (mapAttrsOrdering (n: v: v) ordrf params);
         ordrf = a: b: if a == "system" then true else a < b;
         desc = builtins.concatStringsSep ", " (mapAttrs (n: v: "${n} ${v}") params);
@@ -36,7 +36,7 @@ let
                 enabled = 1;
                 hidden = false;
                 enableemail = true;
-                inputs = inputSpec gitTree gitTreeAdj addSrcs variant params //
+                inputs = inputSpec gitTree gitTreeAdj addSrcs inpAdj variant params //
                   {
                     project = {  # the input containing the job expression (release.nix)
                       type = project.type;
@@ -66,7 +66,7 @@ let
               };
     };
 
-  inputSpec = gitTree: gitTreeAdj: addSrcs: variant: params:
+  inputSpec = gitTree: gitTreeAdj: addSrcs: inpAdj: variant: params:
     let genVal = type: value: { inherit type value; emailresponsible = false; };
 
         cfg = params // { inherit variant; };
@@ -111,7 +111,7 @@ let
                   in withDefAttr []
                      (hasDefAttr {} srclst "haskell-packages") "freshHaskellHashes"
                      mkFrshI;
-            in builtins.listToAttrs (aSrcs ++ gtSrcs ++ otherInps);
+            in builtins.listToAttrs (map (inpAdj cfg) (aSrcs ++ gtSrcs ++ otherInps));
 
     in (strVals cfg) // sourceVals //
        {
@@ -122,8 +122,8 @@ let
        #   };
        };
 
-  jobset_list = project: variant: parameters: gitTree: gitTreeAdj: addSrcs:
-    let jss = jobsetSpec project gitTree gitTreeAdj addSrcs variant;
+  jobset_list = project: variant: parameters: gitTree: gitTreeAdj: addSrcs: inpAdj:
+    let jss = jobsetSpec project gitTree gitTreeAdj addSrcs inpAdj variant;
     in mapEachCombination jss parameters;
 
   mkJobset = { pkgs ? import <nixpkgs> {}
@@ -131,10 +131,11 @@ let
              , gitTree ? null
              , gitTreeAdj ? null
              , addSrcs ? {}: {}
+             , inpAdj ? x: x
              , project
              , parameters ? {}
              }:
-    jobset_list project variant parameters gitTree gitTreeAdj addSrcs;
+    jobset_list project variant parameters gitTree gitTreeAdj addSrcs inpAdj;
 
   mkJobsetsDrv = pkgs: jslists:
     pkgs.stdenv.mkDerivation {
