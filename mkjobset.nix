@@ -7,7 +7,18 @@ let
       type = "git";
       url = url;
       entrypoint = ./configs.nix;
+      # extraReleaseInputs
     };
+
+  gitProjectFromDecl = decl-file:
+    let json = builtins.fromJSON (builtins.readFile decl-file);
+        stdinps = [ "project" "nixpkgs" "hydra-jobsets" "devnix" ];
+        ei = builtins.removeAttrs json.inputs stdinps;
+    in gitProject j.inputs.project.value //
+       {
+         entrypoint = json.nixexprpath;
+         extraReleaseInputs = ei;
+       };
 
   jobsetSpec = project: gitTree: gitTreeAdj: addSrcs: variant: params:
     let name = builtins.concatStringsSep "-" (mapAttrsOrdering (n: v: v) ordrf params);
@@ -135,4 +146,4 @@ let
                    (builtins.listToAttrs (builtins.concatLists jslists)));
     };
 
-in { inherit gitProject mkJobset mkJobsetsDrv; }
+in { inherit gitProject gitProjectFromDecl mkJobset mkJobsetsDrv; }
