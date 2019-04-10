@@ -147,4 +147,9 @@ let
                    (builtins.listToAttrs (builtins.concatLists jslists)));
     };
 
-in { inherit gitProject gitProjectFromDecl mkJobset mkJobsetsDrv; }
+  # Given the output of mkJobset, enables email notifications for that jobset list.
+  enableEmail = map ({name, value}: { inherit name;
+                                      value = value // { enableemail = true; };
+                                    });
+
+in { inherit gitProject gitProjectFromDecl mkJobset mkJobsetsDrv enableEmail; }
