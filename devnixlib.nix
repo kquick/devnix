@@ -263,4 +263,17 @@ rec {
             else o: o;
         c = h o;
     in import nixpkgs { system = s; config = c; };
+
+  defaultPkgArgs = sys: ovr: freshHaskell:
+    let s = if sys == null then builtins.currentSystem else sys;
+        o = { packageOverrides = if ovr == null then p: {} else ovr; };
+        freshH = p: if builtins.isBool freshHaskell
+                    then { all-cabal-hashes = recentHaskellHashes; }
+                    else { all-cabal-hashes = freshHaskell; };
+        oChain = f: g: a: f a // g a;
+        h = if !builtins.isBool freshHaskell || freshHaskell
+            then o: p: o // { packageOverrides = oChain freshH o.packageOverrides; }
+            else o: o;
+        c = h o;
+    in { system = s; config = c; };
 }
