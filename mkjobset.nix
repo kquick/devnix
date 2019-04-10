@@ -35,7 +35,7 @@ let
                 nixexprpath = project.entrypoint;
                 enabled = 1;
                 hidden = false;
-                enableemail = true;
+                enableemail = false;
                 inputs = inputSpec gitTree gitTreeAdj addSrcs inpAdj variant params //
                   {
                     project = {  # the input containing the job expression (release.nix)
