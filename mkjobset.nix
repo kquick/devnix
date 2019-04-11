@@ -111,7 +111,11 @@ let
                   in withDefAttr []
                      (hasDefAttr {} srclst "haskell-packages") "freshHaskellHashes"
                      mkFrshI;
-            in builtins.listToAttrs (map (inpAdj cfg) (aSrcs ++ gtSrcs ++ otherInps));
+                prepS = s: builtins.listToAttrs (map (inpAdj cfg) s);
+                s1 = prepS aSrcs;
+                s2 = prepS gtSrcs;
+                s3 = prepS otherInps;
+            in s1 // s2 // s3;
 
     in (strVals cfg) // sourceVals //
        {
