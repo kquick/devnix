@@ -146,4 +146,4 @@ let
                                       value = value // { enableemail = true; };
                                     });
 
-in { inherit gitProject gitProjectFromDecl mkJobset mkJobsetsDrv enableEmail; }
+in { inherit gitProjectFromDecl mkJobset mkJobsetsDrv enableEmail; }
