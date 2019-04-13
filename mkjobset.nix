@@ -12,7 +12,7 @@ let
 
   gitProjectFromDecl = decl-file:
     let json = builtins.fromJSON (builtins.readFile decl-file);
-        stdinps = [ "project" "nixpkgs" "hydra-jobsets" "devnix" ];
+        stdinps = [ "project" "hydra-jobsets" ];
         ei = builtins.removeAttrs json.inputs stdinps;
     in gitProject json.inputs.project.value //
        {
@@ -46,17 +46,7 @@ let
                         in project.url + extra;
                       emailresponsible = false;
                     };
-                    nixpkgs = {
-                      type = "git";
-                      value = "https://github.com/NixOS/nixpkgs-channels nixos-unstable";  # KWQ
-                      emailresponsible = false;
-                    };
-                    devnix = {
-                      type = "git";
-                      value = "https://github.com/kquick/devnix";
-                      emailresponsible = false;
-                    };
-                    hydraRun = {
+                    hydraRun = {  # This indicates that this is a hydra build, not a user build
                       type = "boolean";
                       value = "true";
                       emailresponsible = false;
