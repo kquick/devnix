@@ -55,6 +55,77 @@ needed for Hydra variants.
      repositories and the corresponding git submodule revision
      references for those repositories.
 
+*** Locally recreating a hydra build
+
+    Useful for debugging or locally working
+
+**** Directly installing
+
+     #+BEGIN_EXAMPLE
+     $ nix-build DRV
+     #+END_EXAMPLE
+
+     where ~DRV~ is the derivation store path or output store path
+     from the "Details" tab of the build.
+
+**** Creating a shell and building as hydra
+
+     #+BEGIN_EXAMPLE
+     $ nix-shell DRV
+     #+END_EXAMPLE
+
+     Within this environment, there are shell variables that manage
+     the build.  They are run as phases, although if phases isn't set,
+     a default set of phases is used.  To run the full build:
+
+     #+BEGIN_EXAMPLE
+     [nix-shell] genericBuild
+     #+END_EXAMPLE
+
+     To setup the ghc-pkgs independently:
+
+     #+BEGIN_EXAMPLE
+     [nix-shell] eval "$setupCompilerEnvironmentPhase"
+     #+END_EXAMPLE
+
+     The above uses things like pkgsHostHost and pkgsHostTarget to
+     configure ghc-pkgs, although the proper configuration flag needs
+     to be passed to GHC to utilize that configuration:
+
+     #+BEGIN_EXAMPLE
+     [nix-shell] echo ${pkgsHostTarget[*]}
+     [nix-shell] ghc-pkg --package-db="$packageConfDir" list
+     #+END_EXAMPLE
+
+     The default set of phases is:
+
+     #+BEGIN_EXAMPLE
+     phases="${prePhases:-} unpackPhase patchPhase ${preConfigurePhases:-}
+             configurePhase ${preBuildPhases:-} buildPhase checkPhase
+             ${preInstallPhases:-} installPhase ${preFixupPhases:-} fixupPhase installCheckPhase
+             ${preDistPhases:-} distPhase ${postPhases:-}";
+     #+END_EXAMPLE
+
+     Be aware that there are also shell functions with the same name
+     as phases, so if (for example) the configurePhase variable is
+     defined, then the following do two different things:
+
+     #+BEGIN_EXAMPLE
+     [nix-shell] configurePhase
+     [nix-shell] eval "$configurePhase"
+     #+END_EXAMPLE
+
+     Running individual phases:
+
+     #+BEGIN_EXAMPLE
+     [nix-shell] eval "${!prePhases:-}"  # use ! because it is a list of vars
+     # If already in a checked-out copy of the source, skip the unpackPhase
+     [nix-shell] eval "$patchPhase"
+     [nix-shell] eval "${!preConfigurePhases:-}"
+     [nix-shell] eval "$configurePhase"
+     ...
+     #+END_EXAMPLE
+
 * FAQ
 
 ** Why ~config.nix~ and not ~default.nix~?
