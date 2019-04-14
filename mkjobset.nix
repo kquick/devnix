@@ -70,23 +70,37 @@ let
 
         genGTreeInp =
             let mkInp = { name, url, rev }:
-                          { name = name;
-                            value = genVal "git" "${url} ${rev}";
-                          };
-            in if gitTreeAdj == null then mkInp else a: mkInp (gitTreeAdj a);
-        gtSrcs = gitTreeSources 2 genGTreeInp gitTree;
+                          # This gitTree instance should either
+                          # override *every* addSrc with the same URL
+                          # (there may be multiple due to subpaths)
+                          # ignoring the input name, or it should be
+                          # its own instance with the generated name.
+                          let aSrcMatches = filterAttrs sameURL inpSrcs;
+                              sameURL = _: s: urlVal s == url;
+                              aSrcMNames = builtins.attrNames aSrcMatches;
+                              valAttr = { value = genVal "git" "${url} ${rev}"; };
+                              names = if builtins.length aSrcMNames == 0 then [ name ]
+                                      else map (n: n + "-src") aSrcMNames;
+                          in builtins.map (n: valAttr // { name = n; }) names;
+                adj = if gitTreeAdj == null then id else gitTreeAdj;
+            in dot mkInp adj;
+        gtSrcs = builtins.concatLists (gitTreeSources 2 genGTreeInp gitTree);
 
         # use all sources, irrespective of packaging, but only where this is
         # a remotely-fetchable source that should be captured in a job source.
-        aSrcs = let r = builtins.removeAttrs srclst [ "haskell-packages" ];
-                    h = srclst.haskell-packages or {};
-                in mapAttrs genSrcInp (gitSources (r // h));
+        inpSrcs = let r = builtins.removeAttrs srclst [ "haskell-packages" ];
+                      h = srclst.haskell-packages or {};
+                  in gitSources (r // h);
+
+        urlVal = v: "${urlBase v}${v.team}/${v.repo}";
+        urlBase = v: v.urlBase or "https://github.com/";
+
         genSrcInp = name: value:
-                      let urlVal = v: "${urlBase v}${v.team}/${v.repo}.git ${v.ref or "master"}";
-                          urlBase = v: v.urlBase or "https://github.com/";
-                      in { name = "${name}-src";
-                           value = genVal "git" (urlVal value);
-                         };
+                      {
+                        name = "${name}-src";
+                        value = genVal "git" (urlVal value + " " + (value.ref or "master"));
+                      };
+        aSrcs = mapAttrs genSrcInp inpSrcs;
 
         srclst = addSrcs cfg;  # variant is branch
 
