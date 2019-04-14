@@ -1,5 +1,11 @@
 rec {
 
+  # Null function
+  id = x: x;
+
+  # Dot is (f . g): functional composition.
+  dot = f: g: a: f (g a);
+
   mapAll = fl: vl: builtins.concatLists (map (v: map (f: f v) fl) vl);
 
   mapEachCombination = f: attrs: map f (allCombinations attrs);
