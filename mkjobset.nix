@@ -108,8 +108,8 @@ let
             let otherInps  =
                   let mkFrshI = v:
                         [ { name = "freshHaskellHashes";
-                            # value = genVal "path" "${freshURL} ${freshPeriod}";
-                            value = genVal "boolean" "true";
+                            value = genVal "path" "${freshURL} ${freshPeriod}";
+                            # value = genVal "boolean" "true";
                           } ];
                       freshURL = https://api.github.com/repos/commercialhaskell/all-cabal-hashes/tarball/hackage;
                       freshPeriod = builtins.toString (24 * 60 * 60); # seconds
