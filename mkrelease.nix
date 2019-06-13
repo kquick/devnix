@@ -108,8 +108,14 @@ let
                (map (n: {name = n; value = hpkgs."${n}"; })
                     (projectSourceTargetNames allProjectSources));
 
+  shell_htargets =
+    let pkgWithTools = n: pkgs.haskell.lib.addExtraLibraries hpkgs."${n}"
+                          [ pkgs.haskell.packages.${ghcver}.cabal-install ];
+        pkgAttr = n: { name = n; value = pkgWithTools n; };
+    in  builtins.listToAttrs (map pkgAttr (projectSourceTargetNames allProjectSources));
+
   globaltgts = withDefAttr {} overrides "global" (o: o parameters);
 
-in htargets // globaltgts;
+in (if pkgs.lib.inNixShell then shell_htargets else htargets) // globaltgts;
 
 }
