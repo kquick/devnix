@@ -102,14 +102,6 @@ let
         toSrc = n: v: requireAttrValuePath { name = n; value = v; };
     in builtins.listToAttrs sl;
 
-  requireAttrValuePath = { name, value } @ a:
-    let isP = builtins.typeOf value == "path";
-        r = builtins.tryEval (builtins.pathExists value);
-        exists = r.success && r.value;
-        ckP = if exists then a
-              else abort "Path for ${name} does not exist: ${value}";
-    in builtins.deepSeq isP (if isP then (builtins.deepSeq ckP ckP) else a);
-
   # There are three possible specifications of sources: the default
   # set from the configs (addSrcs), any information obtained by a
   # gitTree analysis, and any overrides supplied via the command line
