@@ -133,8 +133,8 @@ let
        };
 
   jobset_list = project: variant: parameters: gitTree: gitTreeAdj: addSrcs: inpAdj:
-    let jss = jobsetSpec project gitTree gitTreeAdj addSrcs inpAdj variant;
-    in mapEachCombination jss parameters;
+    let jobset_single = jobsetSpec project gitTree gitTreeAdj addSrcs inpAdj variant;
+    in mapEachCombination jobset_single parameters;
 
   mkJobset = { pkgs ? import <nixpkgs> {}
              , variant ? "master"
