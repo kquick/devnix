@@ -24,6 +24,7 @@ let
     let name = builtins.concatStringsSep "-" (mapAttrsOrdering (n: v: v) ordrf params);
         ordrf = a: b: if a == "system" then true else a < b;
         desc = builtins.concatStringsSep ", " (mapAttrs (n: v: "${n} ${v}") params);
+        specifiedInputs = inputSpecs gitTree gitTreeAdj addSrcs inpAdj variant params;
     in
     { name = "${name}-${variant}";
       value = { checkinterval = 300;
@@ -36,7 +37,7 @@ let
                 enabled = 1;
                 hidden = false;
                 enableemail = false;
-                inputs = inputSpec gitTree gitTreeAdj addSrcs inpAdj variant params //
+                inputs = specifiedInputs //
                   {
                     project = {  # the input containing the job expression (release.nix)
                       type = project.type;
@@ -56,7 +57,7 @@ let
               };
     };
 
-  inputSpec = gitTree: gitTreeAdj: addSrcs: inpAdj: variant: params:
+  inputSpecs = gitTree: gitTreeAdj: addSrcs: inpAdj: variant: params:
     let genVal = type: value: { inherit type value; emailresponsible = false; };
 
         cfg = params // { inherit variant; };
