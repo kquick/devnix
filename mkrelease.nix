@@ -22,11 +22,26 @@ let
                    (hpkg: pkgs.lib.composeExtensions hSources (hpkg parameters));
     in pkgs.haskell.packages."${ghcver}".extend(hextends);
 
+  srcSpecialFlags =
+    # Special flags present in the addSrcs results that don't represent
+    # actual sources but are used to indicate other things.
+    [ "freshHaskellHashes" ];
 
   projectSources = f:
-    # deconstruct URL to create a githubsrc { type="git", ... } source
-    # description.
-    let d = let
+    # Returns the source location for all the source override packages
+    # (those returned by calling addSrcs with the current parameters
+    # as an argument).  In addition, if there is a gitTree that
+    # references that source, deconstruct the URL into a:
+    #
+    #   { pkgname = githubsrc { type="git"; ... }; ... }
+    #
+    # Input argument f is a filter to apply to the input source overrides.
+    #
+    # The result is an attrset of pkgname to githubsrc (or other)
+    # source specification for every package no filtered out of the
+    # addSrcs set.
+    let gittreesrcs =
+            let
               eachGitSrc = if gitTreeAdj == null then gitsrcref
                            else a: gitsrcref (gitTreeAdj a);
               gitsrcref = { name, url, rev }:
@@ -36,16 +51,41 @@ let
                 };
               gtree = gitTreeSources 2 eachGitSrc gitTree;
             in builtins.listToAttrs gtree;
-        s = addSrcs parameters;
-        r = builtins.removeAttrs (f s) [ "freshHaskellHashes" ];
-        o = builtins.intersectAttrs r d;  # d.x, but only where x is also in r
-    in overridePropagatingAttrs [ "subpath" ] r o;
+        srclist = addSrcs parameters;
+        real_srclist = builtins.removeAttrs (f srclist) srcSpecialFlags;
+        src_overrides =
+          # gittreesrcs.x, but only where x is also in real_srclist
+          builtins.intersectAttrs real_srclist gittreesrcs;
+    in overridePropagatingAttrs [ "subpath" ] real_srclist src_overrides;
 
   allProjectSources =
-    let f = s: builtins.removeAttrs s [ "haskell-packages" ] // (s.haskell-packages or {});
+    # Every source specified by calling the addSrcs input with the
+    # current parameters as an argument.
+    #
+    # Promotes every entry in the "haskell-packages" portion into the
+    # top-level (overriding any previous entry there).
+    #
+    # Example:
+    #   { foo = githubsrc { ..loc_A.. };
+    #     haskell-packages = {
+    #       foo = githubsrc { ..loc_B.. };
+    #       bar = githubsrc { ... };
+    #     };
+    #   }
+    #
+    # becomes
+    #  { foo = githubsrc { ..loc_B.. };
+    #    bar = githubsrc { ... };
+    #  }
+    let f = s: builtins.removeAttrs s [ "haskell-packages" ] //
+               (s.haskell-packages or {});
     in projectSources f;
 
-  haskellProjectSources = let f = s: s.haskell-packages or {}; in projectSources f;
+  haskellProjectSources =
+    # Only the haskell sources specified by calling the addSrcs input
+    # with the current parameters as an argument and returning
+    # everything it specifies under the "haskell-packages" attribute.
+    let f = s: s.haskell-packages or {}; in projectSources f;
 
   isSrcURL = n: v: builtins.typeOf v == "string" && startsWith "https://" v;
 
