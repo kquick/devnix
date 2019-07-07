@@ -87,11 +87,9 @@ let
     # everything it specifies under the "haskell-packages" attribute.
     let f = s: s.haskell-packages or {}; in projectSources f;
 
-  isSrcURL = n: v: builtins.typeOf v == "string" && startsWith "https://" v;
-
   projectSourceTargetNames = prjSrcs:
     let gs = builtins.attrNames (gitSources prjSrcs);
-        srcUrls = filterAttrs isSrcURL prjSrcs;
+        srcUrls = filterAttrs isURLValue prjSrcs;
         srcTgts = builtins.attrNames srcUrls;
     in gs ++ srcTgts;
 
@@ -122,7 +120,7 @@ let
                then { name = n; value = s.version; }
                else throw ("Unknown project source type: " + s.type);
         stringOvr = n: v:
-          if isSrcURL n v
+          if isURLValue n v
           then { name = n; value = githubSrcURL v; }
           else { name = n; value = v; };
         githubOvr = n: v:
