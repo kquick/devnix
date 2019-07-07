@@ -238,6 +238,15 @@ rec {
     in filterAttrs isPath srcs;
 
 
+  isURLValue =
+    # Predicate returning true if the value argument is a URL.
+    #
+    # Takes a name and value to make it easy to use with mapAttrs.
+    n:  # ignored; presumably the attribute name
+    v:  # value to test for being a URL
+    builtins.typeOf v == "string" && startsWith "https://" v;
+
+
   gitURLSplit =
     # Given a URL git reference, split it into an attrset of base,
     # team, repo, and subpath.  Note that this is very similar to a
