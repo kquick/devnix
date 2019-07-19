@@ -95,7 +95,8 @@ rec {
                          in if pred name v
                             then [(nameValuePair name v)]
                             else [];
-    in with builtins; listToAttrs (concatMap chkEntry (attrNames set));
+    in with builtins; listToAttrs (builtins.concatLists
+                                   (builtins.map chkEntry (attrNames set)));
 
 
   hasDef =
