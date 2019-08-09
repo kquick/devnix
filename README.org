@@ -34,13 +34,61 @@ needed for Hydra variants.
 
 * Usage
 
+** Maintaining the devnix specification
+
+   The devnix configs.nix (and associated) files can be maintained in
+   the project repo itself or in a separate location (e.g. a separate
+   repository).
+
+   The advantage to maintaining the configuration in a separate
+   repository is that it keeps the main repository clean and the
+   configuration can be managed independently from the project (since
+   the configuration depends on elements which change outside of the
+   project itself, like recent dependency releases, etc.).
+
 ** With nix-shell
 
-   Pending...
+   Assumes the devnix configs.nix is in ~$HOME/my-devnix~, and the
+   project you want to work on is checked out in
+   ~$HOME/projects/myproj~.
+
+   #+BEGIN_EXAMPLE
+   $ cd $HOME/projects/myproj
+   $ nix-shell $HOME/my-devnix/configs.nix -A myproj.env
+   [nix-shell] $ BUILD_COMMAND
+   #+END_EXAMPLE
 
 ** With nix-build
 
-   Pending...
+   Assumes the same devnix location as the nix-shell example.
+
+   To build myproj from the declared source (e.g. github):
+
+   #+BEGIN_EXAMPLE
+   $ nix-build $HOME/my-devnix/configs.nix -A myproj
+   #+END_EXAMPLE
+
+   This will create a ~results~ link in the current directory that
+   points to the myproj just installed and built in the nix store.
+
+   If the above should build a locally checked-out version of myproj
+   instead, then edit the ~configs.nix~ file and where the ~myproj~
+   github declaration is, add a local parameter.  For example:
+
+   #+BEGIN_EXAMPLE
+   ...
+   myproj = githubsrc "myself" "myproj";
+   ...
+   #+END_EXAMPLE
+
+   would become:
+
+   #+BEGIN_EXAMPLE
+   ...
+   myproj = githubsrc "myself" "myproj" // { local = /home/me/projects/myproj; };
+   ...
+   #+END_EXAMPLE
+
 
 ** With hydra
 
@@ -62,6 +110,7 @@ needed for Hydra variants.
 **** Directly installing
 
      #+BEGIN_EXAMPLE
+     $ nix copy --from ssh://hydra-system  /nix/store/path-from-details-tab.drv
      $ nix-build DRV
      #+END_EXAMPLE
 
@@ -125,6 +174,127 @@ needed for Hydra variants.
      [nix-shell] eval "$configurePhase"
      ...
      #+END_EXAMPLE
+
+** Haskell Considerations
+
+*** Building
+
+   When using the nix-shell configuration described above, the
+   BUILD_COMMAND is usually a "cabal build" or "cabal test" directive.
+
+   Note that either cabal v1-build or v2-build can be used: the
+   nix-shell should have brought all the dependencies into scope so
+   everything should be available for v1 and v2.
+
+*** A dependency is "not found in archive"
+
+  #+BEGIN_EXAMPLE
+  $ nix-build -A myproj $HOME/mydevnix/configs.nix
+  ...
+  building '/nix/store/HASH-all-cabal-hashes-component-th-abstraction-0.3.1.0.drv'...
+  tar: */th-abstraction/0.3.1.0/th-abstraction.json: Not found in archive
+  tar: */th-abstraction/0.3.1.0/th-abstraction.cabal: Not found in archive
+  tar: Exiting with failure status due to previous errors
+  builder for '/nix/store/HASH-all-cabal-hashes-component-th-abstraction-0.3.1.0.drv' failed with exit code 2
+  cannot build derivation '/nix/store/HASH-all-cabal-hashes-component-th-abstraction-0.3.1.0.drv': 1 dependencies couldn't be built
+  $
+  #+END_EXAMPLE
+
+  This happens because this is a newer version of the package
+  (~th-abstraction~ in this example) that is not present in the
+  standard nix haskell packages definitions and so a cabal2nix-based
+  specification is being auto-constructed, but the sha256 hash for the
+  package could not be found in the hashes repository.
+
+  First, ensure that you are using a recent nixpkgs version and that
+  your channel is updated.  An 18.09 channel is known to be too old,
+  and the unstable channel should be recent enough.  You can use this
+  by either updating your channel with ~$ nix-channel --update~ or by
+  passing the updated version to configs.nix:
+
+  #+BEGIN_EXAMPLE
+  $ nix-build -A myproj $HOME/mydevnix/configs.nix --arg nixpkgs https://nixos.org/channels/nixos-unstable
+  #+END_EXAMPLE
+
+  If you still encounter the error, then it means that the package
+  definition hasn't been picked up in nix, but it has probably been
+  updated upstream already.  The upstream location is
+  https://api.github.com/repos/commercialhaskell/all-cabal-hashes/tarball/hackage
+  (as of Aug 2019).
+
+  The devnixlib process can automatically fetch a recent version of
+  this for you:
+
+  #+BEGIN_EXAMPLE
+  $ nix-build -A myproj $HOME/mydevnix/configs.nix --arg freshHaskellHashes true
+  #+END_EXAMPLE
+
+  [Note that if your channel is too old, the mechanism supporting
+  ~freshHaskellHashes~ is not yet available and you will still get the
+  error above; use a recent channel, and 18.09 is known to be too old.
+
+  The downside to simply specifying ~freshHaskellHashes~ as ~true~ is
+  that nix will only cache this file for a little while (usually 3600
+  seconds, see ~$ nix show-config | grep tarball~), so when this cache
+  period expires, it will get a (likely new) version of the hashes
+  file, which will have a new sha256 hash, and therefore cause
+  rebuilds of most of the downstream elements.
+
+  To fix this, add a recent version of the haskellHashes file to your
+  store and then use that store location instead of ~true~ for the
+  ~freshHaskellHashes~ argument:
+
+  #+BEGIN_EXAMPLE
+  $ nix build $(nix eval --raw '(builtins.fetchurl { url = \
+    https://api.github.com/repos/commercialhaskell/all-cabal-hashes/tarball/hackage; \
+    })') -o freshHashes
+  #+END_EXAMPLE
+
+  creates the freshHashes link in the local directory to allow:
+
+  #+BEGIN_EXAMPLE
+  $ nix-build -A myproj $HOME/mydevnix/configs.nix --arg freshHaskellHashes $(readlink -f freshHashes)
+  #+END_EXAMPLE
+
+*** Updating dependencies along with the current project
+
+  If the myproj project has a dependency on the mydep project, and a
+  local development process requires changes to both, it can be
+  inconvenient to continually exit and re-enter the nix-shell
+  enviroinment for myproj when changes have been made to a local copy
+  of mydep.  Additionally this can be slower because mydep will need
+  to be fully rebuilt and the new version installed into the nix store
+  before myproj's nix-shell environment is ready.
+
+  The best way to handle this is to use cabal's v2-build functionality
+  with a ~cabal.project~ file:
+
+  1. Checkout myproj: ~$ git clone https://github.com/myself/myproj $HOME/projects/myproj~
+  2. Checkout mydep:  ~$ git clone https://github.com/myself/mydep $HOME/projects/mydep~
+  3. Enter the nix-shell environment for myproj
+     #+BEGIN_EXAMPLE
+     $ nix-shell $HOME/my-devnix/configs.nix -A myproj.env
+     [nix-shell] $
+     #+END_EXAMPLE
+  4. Create a ~cabal.project~ file that references mydep:
+     #+BEGIN_EXAMPLE
+     $ cat << EOF > cabal.project
+     packages: .
+               $HOME/projects/mydep
+     EOF
+     $
+     #+END_EXAMPLE
+  5. Normal dev and build:
+     #+BEGIN_EXAMPLE
+     $ edit myproj-files-or-mydep-files
+     $ cabal v2-build
+     $ cabal v2-test
+     #+END_EXAMPLE
+
+     During the dev and build process, cabal's v2-build will build
+     version of mydep cached in the local ~dist-newstyle/~
+     subdirectory, updating it as necessary as changes are made to
+     mydep but building only the necessary elements.
 
 * FAQ
 
