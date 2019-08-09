@@ -269,14 +269,15 @@ needed for Hydra variants.
   The best way to handle this is to use cabal's v2-build functionality
   with a ~cabal.project~ file:
 
-  1. Checkout myproj: ~$ git clone https://github.com/myself/myproj $HOME/projects/myproj~
-  2. Checkout mydep:  ~$ git clone https://github.com/myself/mydep $HOME/projects/mydep~
-  3. Enter the nix-shell environment for myproj
+  1. Checkout myproj:
      #+BEGIN_EXAMPLE
-     $ nix-shell $HOME/my-devnix/configs.nix -A myproj.env
-     [nix-shell] $
+     $ git clone https://github.com/myself/myproj $HOME/projects/myproj
      #+END_EXAMPLE
-  4. Create a ~cabal.project~ file that references mydep:
+  2. Checkout mydep:
+     #+BEGIN_EXAMPLE
+     $ git clone https://github.com/myself/mydep $HOME/projects/mydep
+     #+END_EXAMPLE
+  3. Create a ~cabal.project~ file that references mydep:
      #+BEGIN_EXAMPLE
      $ cat << EOF > cabal.project
      packages: .
@@ -284,11 +285,16 @@ needed for Hydra variants.
      EOF
      $
      #+END_EXAMPLE
+  3. Enter the nix-shell environment for myproj
+     #+BEGIN_EXAMPLE
+     $ nix-shell $HOME/my-devnix/configs.nix -A myproj.env
+     [nix-shell] $
+     #+END_EXAMPLE
   5. Normal dev and build:
      #+BEGIN_EXAMPLE
-     $ edit myproj-files-or-mydep-files
-     $ cabal v2-build
-     $ cabal v2-test
+     [nix-shell] $ edit myproj-files-or-mydep-files
+     [nix-shell] $ cabal v2-build
+     [nix-shell] $ cabal v2-test
      #+END_EXAMPLE
 
      During the dev and build process, cabal's v2-build will build
