@@ -123,14 +123,7 @@ let
                 s3 = prepS otherInps;
             in s1 // s2 // s3;
 
-    in (strVals cfg) // sourceVals //
-       {
-       #   hackage-index = {
-       #          type = "path";
-       #          value = "https://hackage.haskell.org/01-index.tar.gz 86400";
-       #          emailresponsible = false;
-       #   };
-       };
+    in (strVals cfg) // sourceVals;
 
   jobset_list = project: variant: parameters: gitTree: gitTreeAdj: addSrcs: inpAdj:
     let jobset_single = jobsetSpec project gitTree gitTreeAdj addSrcs inpAdj variant;
