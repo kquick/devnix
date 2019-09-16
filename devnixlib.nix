@@ -416,7 +416,31 @@ rec {
     # regex point or the end of the string).
     m:  # regex of split marker points
     s:  # input string to split
-    builtins.filter builtins.isString (builtins.split m s)
+    builtins.filter builtins.isString (builtins.split m s);
+
+  assocEqListHasKey =
+    # An assocEqList is a list of strings where each string is of
+    # the form "key=value".  This function checks each entry to see
+    # if the key matches the input key specified and returns true if
+    # it is present.
+    key:  # name of key to search for
+    aeql:
+    builtins.any (e: key == builtins.head (splitBy "=" e)) aeql;
+
+  assocEqListLookup =
+    # An assocEqList is a list of strings where each string is of the
+    # form "key=value".  This function returns the value for the
+    # specified key, or null if the key does not exist in the list.
+    # Returns the first entry if the key appears multiple times in the
+    # list.
+    key:  # name of key to search for
+    aeql:
+    let m = builtins.filter (e: key == builtins.head (splitBy "=" e)) aeql;
+        keylen = builtins.stringLength key;
+        rmvkey = v: builtins.substring (keylen + 1) (builtins.stringLength v) v;
+    in if 0 == builtins.length m
+       then null
+       else rmvkey (builtins.head m);
 
   splitLast =
     # Splits the input string into regex matches and returns the last
