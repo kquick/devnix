@@ -409,6 +409,15 @@ rec {
     let ll = builtins.length l;
     in if ll == 0 then "<none>" else builtins.elemAt l (ll - 1);
 
+  splitBy =
+    # Splits the input string by the specified regex and returns the
+    # portions split by the regex.  The result is always a list of at
+    # least one element (the prefix of the string up until the first
+    # regex point or the end of the string).
+    m:  # regex of split marker points
+    s:  # input string to split
+    builtins.filter builtins.isString (builtins.split m s)
+
   splitLast =
     # Splits the input string into regex matches and returns the last
     # regex match.
