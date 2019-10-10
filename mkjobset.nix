@@ -107,23 +107,20 @@ let
 
         sourceVals =
             let otherInps  =
-                  let mkFrshI = v: builtins.trace "freshHaskellHashes!"
+                  let mkFrshI = v:
                         [ { name = "freshHaskellHashes";
                             value = genVal "path" "${freshURL} ${freshPeriod}";
                             # value = genVal "boolean" "true";
                           } ];
                       freshURL = https://api.github.com/repos/commercialhaskell/all-cabal-hashes/tarball/hackage;
                       freshPeriod = builtins.toString (24 * 60 * 60); # seconds
-                      hp = hasDefAttr {} srclst "haskell-packages";
-                      fhh = withDefAttr [] (builtins.trace ("hp: " + builtins.toString (builtins.attrNames hp)) hp) "freshHaskellHashes" mkFrshI;
-                  in builtins.trace ("fhh: " + builtins.toString fhh) fhh;
-                  # in withDefAttr []
-                  #    (hasDefAttr {} srclst "haskell-packages") "freshHaskellHashes"
-                  #    mkFrshI;
+                  in withDefAttr []
+                     (hasDefAttr {} srclst "haskell-packages") "freshHaskellHashes"
+                     mkFrshI;
                 prepS = s: builtins.listToAttrs (map (inpAdj cfg) s);
                 s1 = prepS aSrcs;
                 s2 = prepS gtSrcs;
-                s3 = prepS (builtins.trace ("otherInps" + builtins.toString otherInps) otherInps);
+                s3 = prepS otherInps;
             in s1 // s2 // s3;
 
     in (strVals cfg) // sourceVals;
