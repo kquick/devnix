@@ -134,15 +134,23 @@ let
         srcAttrList = mapAttrs mkSrcOvr prjSrcs;
     in builtins.listToAttrs srcAttrList;
 
-  htargets = builtins.listToAttrs
-               (map (n: {name = n; value = hpkgs."${n}"; })
-                    (projectSourceTargetNames allProjectSources));
+  isHaskellPackage = n: let e = hpkgs."${n}" or null; in if e == null then false else true;
+
+  htargets =
+    builtins.listToAttrs
+      (map (n: {name = n; value = hpkgs."${n}"; })
+        (builtins.filter isHaskellPackage
+          (projectSourceTargetNames allProjectSources)));
 
   shell_htargets =
     let pkgWithTools = n: pkgs.haskell.lib.addExtraLibraries hpkgs."${n}"
                           [ pkgs.haskell.packages.${ghcver}.cabal-install ];
         pkgAttr = n: { name = n; value = pkgWithTools n; };
-    in  builtins.listToAttrs (map pkgAttr (projectSourceTargetNames allProjectSources));
+    in
+      builtins.listToAttrs
+        (map pkgAttr
+          (builtins.filter isHaskellPackage
+            (projectSourceTargetNames allProjectSources)));
 
   globaltgts = withDefAttr {} overrides "global" (o: o parameters);
 
