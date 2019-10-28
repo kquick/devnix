@@ -17,6 +17,17 @@ rec {
     vl:  # list of values to pass to the functions
     builtins.concatLists (map (v: map (f: f v) fl) vl);
 
+  keepAttrs =
+    # This is the inverse of the builtins.removeAttrs: given a list of
+    # attrNames and a set, it returns the subset containing only the
+    # elements specified in the list.  The list may be a superset of
+    # the actual attributes present.
+    names:  # list of attr names to keep in the result set
+    set:    # attrset to filter
+    let isBad = n: ! builtins.elem n names;
+        badnames = builtins.filter isBad (builtins.attrNames set);
+    in builtins.removeAttrs set badnames;
+
   mapEachCombination =
     # Apply a function to each possible attribute/value combination.
     # Calls allCombinations to get the possible attribute/value
