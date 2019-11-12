@@ -11,7 +11,7 @@ versions of them are needed, or when applying Hydra CI to the project,
 it becomes fairly tedious to manage the nix environment.
 
 The devnix tooling is designed to make the latter situations easier.
-Simply create a ~config.nix~ that provides the high-level description
+Simply create a ~configs.nix~ that provides the high-level description
 and then invoke either the ~mkRelease~ or the ~mkJobsetsDrv~ and
 ~mkJobset~ functions with those descriptive inputs.  These will
 generate the appropriate definitions to use with ~nix-build~ or
@@ -304,7 +304,7 @@ needed for Hydra variants.
 
 * FAQ
 
-** Why ~config.nix~ and not ~default.nix~?
+** Why ~configs.nix~ and not ~default.nix~?
 
    There's no critical reason, but since the default.nix is
    customarily used for the description of a single package, a
