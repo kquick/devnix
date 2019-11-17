@@ -17,11 +17,6 @@ let
   ghcver = parameters.ghcver or "ghc864";
   variant = parameters.variant or "master";
 
-  hpkgs =
-    let hextends = withDefAttr hSources overrides "haskell-packages"
-                   (hpkg: pkgs.lib.composeExtensions hSources (hpkg parameters));
-    in pkgs.haskell.packages."${ghcver}".extend(hextends);
-
   srcSpecialFlags =
     # Special flags present in the addSrcs results that don't represent
     # actual sources but are used to indicate other things.
@@ -81,24 +76,11 @@ let
                (s.haskell-packages or {});
     in projectSources f;
 
-  haskellProjectSources =
-    # Only the haskell sources specified by calling the addSrcs input
-    # with the current parameters as an argument and returning
-    # everything it specifies under the "haskell-packages" attribute.
-    let f = s: s.haskell-packages or {}; in projectSources f;
-
   projectSourceTargetNames = prjSrcs:
     let gs = builtins.attrNames (gitSources prjSrcs);
         srcUrls = filterAttrs isURLValue prjSrcs;
         srcTgts = builtins.attrNames srcUrls;
     in gs ++ srcTgts;
-
-  hSources = pkgs.haskell.lib.packageSourceOverrides hSrcOverrides;
-
-  hSrcOverrides =
-    let sl = mapAttrs toSrc (projectSourceOverrides haskellProjectSources);
-        toSrc = n: v: requireAttrValuePath { name = n; value = v; };
-    in builtins.listToAttrs sl;
 
   # There are three possible specifications of sources: the default
   # set from the configs (addSrcs), any information obtained by a
@@ -134,7 +116,28 @@ let
         srcAttrList = mapAttrs mkSrcOvr prjSrcs;
     in builtins.listToAttrs srcAttrList;
 
+  ######################################################################
+  # Haskell packages
+
+  hpkgs =
+    let hextends = withDefAttr hSources overrides "haskell-packages"
+                   (hpkg: pkgs.lib.composeExtensions hSources (hpkg parameters));
+    in pkgs.haskell.packages."${ghcver}".extend(hextends);
+
   isHaskellPackage = n: let e = hpkgs."${n}" or null; in if e == null then false else true;
+
+  haskellProjectSources =
+    # Only the haskell sources specified by calling the addSrcs input
+    # with the current parameters as an argument and returning
+    # everything it specifies under the "haskell-packages" attribute.
+    let f = s: s.haskell-packages or {}; in projectSources f;
+
+  hSources = pkgs.haskell.lib.packageSourceOverrides hSrcOverrides;
+
+  hSrcOverrides =
+    let sl = mapAttrs toSrc (projectSourceOverrides haskellProjectSources);
+        toSrc = n: v: requireAttrValuePath { name = n; value = v; };
+    in builtins.listToAttrs sl;
 
   htargets =
     builtins.listToAttrs
@@ -152,8 +155,14 @@ let
           (builtins.filter isHaskellPackage
             (projectSourceTargetNames allProjectSources)));
 
+  haskellTargets =
+    let inShell = pkgs.lib.inNixShell; in
+    if inShell then shell_htargets else htargets;
+
+  ######################################################################
+
   globaltgts = withDefAttr {} overrides "global" (o: o parameters);
 
-in (if pkgs.lib.inNixShell then shell_htargets else htargets) // globaltgts;
+in haskellTargets // globaltgts;
 
 }
