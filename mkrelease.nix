@@ -14,7 +14,7 @@ mkRelease =
     }:
 let
 
-  ghcver = parameters.ghcver or "ghc864";
+  ghcver = parameters.ghcver or "ghc865";
   variant = parameters.variant or "master";
 
   srcSpecialFlags =
