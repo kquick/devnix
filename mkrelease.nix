@@ -62,6 +62,7 @@ let
     #
     # Example:
     #   { foo = githubsrc { ..loc_A.. };
+    #     cow = githubsrc { ..loc_C.. };
     #     haskell-packages = {
     #       foo = githubsrc { ..loc_B.. };
     #       bar = githubsrc { ... };
@@ -71,6 +72,7 @@ let
     # becomes
     #  { foo = githubsrc { ..loc_B.. };
     #    bar = githubsrc { ... };
+    #    cow = githubsrc { ..loc_C.. };
     #  }
     let f = s: builtins.removeAttrs s [ "haskell-packages" ] //
                (s.haskell-packages or {});
