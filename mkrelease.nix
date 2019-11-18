@@ -160,9 +160,25 @@ let
     if inShell then shell_htargets else htargets;
 
   ######################################################################
+  # General targets
+
+  genTargetSrcs =
+    let f = s: builtins.removeAttrs s [ "haskell-packages" ];
+    in projectSources f;
+
+  genTargets =
+    let srcNames = builtins.attrNames genTargetSrcs;
+        drvWithSrcOverride = n:
+          { name = n;
+            value = (globaltgts.${n} or pkgs.${n}).overrideDerivation
+              (d: { src = genTargetSrcs.${n}; });
+          };
+    in builtins.listToAttrs (map drvWithSrcOverride srcNames);
+
+  ######################################################################
 
   globaltgts = withDefAttr {} overrides "global" (o: o parameters);
 
-in haskellTargets // globaltgts;
+in haskellTargets // genTargets // globaltgts;
 
 }
