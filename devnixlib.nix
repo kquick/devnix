@@ -170,6 +170,24 @@ rec {
     in builtins.deepSeq isP (if isP then (builtins.deepSeq ckP ckP) else a);
 
 
+  callWith =
+    # Like callPackage but doesn't expect the called function/file to
+    # return a derivation and therefore doesn't attempt to enable
+    # overrides.
+    implicitArgs:  # attrset that can be used to supply argument values
+    fn:            # function to call or filename to import and call as a function
+    args:          # explicit arguments to supply to the function call
+    let
+      # isFunction and functionArgs copied from lib/trivial.nix, which
+      # is not conveniently available here
+      isFunction = f: builtins.isFunction f ||
+                      (f ? __functor && isFunction (f.__functor f));
+      functionArgs = f: f.__functionArgs or (builtins.functionArgs f);
+      f = if isFunction fn then fn else import fn;
+      auto = builtins.intersectAttrs (functionArgs f) implicitArgs;
+    in f (auto // args);
+
+
   # ----------------------------------------------------------------------
 
   githubsrc =
