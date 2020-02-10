@@ -146,6 +146,13 @@ rec {
     then withDef d (builtins.getAttr a s) f
     else d;
 
+  attrsWhen =
+    # Returns the specified attr set when the specified predicate
+    # returns true, otherwise an empty attrset.
+    p:  # predicate to test: true = supplied attrset, false = empty attrset
+    a:  # attrset to return when predicate is true
+    if p then a else {};
+
   overridePropagatingAttrs = propAttrs: orig: upd:
     let ca = builtins.intersectAttrs orig upd;
         can = builtins.attrNames ca;
