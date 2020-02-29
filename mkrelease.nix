@@ -98,7 +98,11 @@ let
                     else if s.type            == "github"         then githubOvr n s
                     else if s.type            == "hackageVersion" then hackageOvr n s
                     else throw ("Unknown project source type: " + s.type);
-          in withDefAttr loc srcs "${n}-src" (pathOvr n);
+              inp_src = i: pathOvr n (plusSubpath i s);
+          in withDefAttr loc srcs "${n}-src" inp_src;
+        plusSubpath = pth: attrval:
+          let pp = withDefAttr "" attrval "subpath" (p: "/" + p);
+          in pth + pp;
         stringOvr = n: v:
           let val = if isURLValue n v then githubSrcURL v else v; in { name = n; value = val; };
         pathOvr = n: v: { name = n; value = v; };
@@ -106,11 +110,11 @@ let
         githubOvr = n: v:
           let ghsrc = githubSrcFetch ({ ref = "master"; } // v);
               isrc = hasDefAttr ghsrc srcs n;
-              extraArgs = withDefAttr "" v "subpath" mkSubpath;
-              mkSubpath = p: "/" + p;
               asPath = x: { string = x; path = /. + x; }."${builtins.typeOf x}";
-              r = { name = n; value = asPath (isrc + extraArgs); };
-          in if !hydraRun && builtins.hasAttr "local" v then stringOvr n (v.local + extraArgs) else r;
+              r = { name = n; value = asPath (plusSubpath isrc v); };
+          in if !hydraRun && builtins.hasAttr "local" v
+             then stringOvr n (plusSubpath v.local v)
+             else r;
         srcAttrList = mapAttrs mkSrcOvr prjSrcs;
     in builtins.listToAttrs srcAttrList;
 
