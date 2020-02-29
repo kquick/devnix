@@ -93,23 +93,19 @@ let
   # fields (such as subpath).
   projectSourceOverrides = prjSrcs:
     let mkSrcOvr = n: s:
-          if builtins.typeOf s == "string"
-          then stringOvr n s
-          else if builtins.typeOf s == "path"
-          then { name = n; value = s; }
-          else
-          if s.type == "github"
-          then githubOvr n s
-          else if s.type == "hackageVersion"
-               then { name = n; value = s.version; }
-               else throw ("Unknown project source type: " + s.type);
+          let loc = if      builtins.typeOf s == "string"         then stringOvr n s
+                    else if builtins.typeOf s == "path"           then pathOvr n s
+                    else if s.type            == "github"         then githubOvr n s
+                    else if s.type            == "hackageVersion" then hackageOvr n s
+                    else throw ("Unknown project source type: " + s.type);
+          in withDefAttr loc srcs "${n}-src" (pathOvr n);
         stringOvr = n: v:
-          if isURLValue n v
-          then { name = n; value = githubSrcURL v; }
-          else { name = n; value = v; };
+          let val = if isURLValue n v then githubSrcURL v else v; in { name = n; value = val; };
+        pathOvr = n: v: { name = n; value = v; };
+        hackageOvr = n: v: { name = n; value = v.version; };
         githubOvr = n: v:
           let ghsrc = githubSrcFetch ({ ref = "master"; } // v);
-              isrc = hasDefAttr (hasDefAttr ghsrc srcs n) srcs "${n}-src";
+              isrc = hasDefAttr ghsrc srcs n);
               extraArgs = withDefAttr "" v "subpath" mkSubpath;
               mkSubpath = p: "/" + p;
               asPath = x: { string = x; path = /. + x; }."${builtins.typeOf x}";
