@@ -105,7 +105,7 @@ let
         hackageOvr = n: v: { name = n; value = v.version; };
         githubOvr = n: v:
           let ghsrc = githubSrcFetch ({ ref = "master"; } // v);
-              isrc = hasDefAttr ghsrc srcs n);
+              isrc = hasDefAttr ghsrc srcs n;
               extraArgs = withDefAttr "" v "subpath" mkSubpath;
               mkSubpath = p: "/" + p;
               asPath = x: { string = x; path = /. + x; }."${builtins.typeOf x}";
