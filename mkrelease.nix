@@ -137,8 +137,53 @@ let
   hSources = pkgs.haskell.lib.packageSourceOverrides hSrcOverrides;
 
   hSrcOverrides =
-    let sl = mapAttrs toSrc (projectSourceOverrides haskellProjectSources);
-        toSrc = n: v: requireAttrValuePath { name = n; value = v; };
+    # Return an attrset of haskell packages and the corresponding
+    # source input for that package.  The source input is determined
+    # based on the rules of projectSourceOverrides above, but any
+    # source that is a path should exist.
+    #
+    # If the source input is a non-existent path, then this either indicates:
+    #
+    #    * an underspecified srcs/addSrcs input (needs to be fixed in the caller), OR
+    #
+    #    * a subpath source that does not yet exist in this repo commit hash
+    #
+    # As an example of the latter case, if top level repo R1 has repo
+    # R2 as a submodule, and R2 contains two haskell modules (R2a and
+    # R2b), each in a subpath of the R2 repo, then if R2 adds a new
+    # haskell module (R2c), then inputs need to be defined for that
+    # module, but the checkout of older R2 (as dictated by
+    # yet-to-be-updated submodules of R1) will *not* have R2c present.
+    #
+    # To handle this latter case, any input that is a non-existent
+    # path and the input includes a subpath specification, then an
+    # empty cabal file is created that will satisfy cabal2nix
+    # evaluation of inputs, but which will not provide the actual
+    # module (if it were built, but it shouldn't be because there
+    # should be no references to that module in the older commit).  If
+    # there is no subpath, then the input should have been provided
+    # and an abort is performed instead.
+    let hsrcs = projectSourceOverrides haskellProjectSources;
+        sl = mapAttrs toSrc hsrcs;
+        toSrc = n: v:
+          let snv = { name = n; value = v; };
+              snv_exists = checkAttrValuePathExists snv;
+              missing_input = { name = n;
+                                value = pkgs.stdenv.mkDerivation {
+                                  name = "${n}-missing";
+                                  buildCommand = ''
+                                    mkdir $out
+                                    echo name: ${n} >> $out/${n}.cabal
+                                    echo version: 0.0.0.1 >> $out/${n}.cabal
+                                    '';
+                                };
+                              };
+              fake_or_abort =
+                if builtins.hasAttr "subpath" (haskellProjectSources."${n}")
+                then missing_input
+                else abort ("Path for haskell input ${n} does not exist: " +
+                            builtins.toString v);
+          in hasDef fake_or_abort snv_exists;
     in builtins.listToAttrs sl;
 
   htargets =
