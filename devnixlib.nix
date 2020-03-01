@@ -164,17 +164,25 @@ rec {
     in orig // upd // cau;
 
 
-  requireAttrValuePath =
-    # Given an attribute name and its value, ensure that the value is
-    # a valid, existing path or abort if it is not.
+  checkAttrValuePathExists =
+    # Given an attribute name and its value, return the attrset if the
+    # (possibly updated) value is a valid existing path, or null if it
+    # does not exist.
     { name, value } @ a:
-    # KWQ: if a string, try converting the string to a path and validating the path
-    let isP = builtins.typeOf value == "path";
+    let isP_ = builtins.typeOf value == "path";
+        isP = builtins.deepSeq isP_ isP_;
         r = builtins.tryEval (builtins.pathExists value);
         exists = r.success && r.value;
-        ckP = if exists then a
-              else abort "Path for ${name} does not exist: ${value}";
-    in builtins.deepSeq isP (if isP then (builtins.deepSeq ckP ckP) else a);
+        rPath = if exists then a else null;
+    in if isP then (builtins.deepSeq rPath rPath) else a;
+
+  requireAttrValuePath =
+    # Given an attribute name and its value, ensure that IF the value is
+    # a path that the path is valid and exists, aborting if it is not.
+    { name, value } @ a:
+    let chk = checkAttrValuePathExists a;
+        nopath = abort ("Path FOR ${name} does not exist: " + builtins.toString value);
+    in builtins.deepSeq chk (hasDef nopath a);
 
 
   callWith =
