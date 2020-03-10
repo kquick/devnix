@@ -203,8 +203,9 @@ let
             (projectSourceTargetNames allProjectSources)));
 
   haskellTargets =
-    let inShell = pkgs.lib.inNixShell; in
-    if inShell then shell_htargets else htargets;
+    let inShell = false;
+        # inShell = pkgs.lib.inNixShell; <-- modifies packages, no binary substitution
+    in if inShell then shell_htargets else htargets;
 
   ######################################################################
   # General targets
