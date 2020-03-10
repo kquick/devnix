@@ -104,8 +104,20 @@ let
           let pp = withDefAttr "" attrval "subpath" (p: "/" + p);
           in pth + pp;
         stringOvr = n: v:
-          let val = if isURLValue n v then githubSrcURL v else v; in { name = n; value = val; };
-        pathOvr = n: v: { name = n; value = v; };
+          let val = if isURLValue n v then githubSrcURL v else cleaned v;
+              cleaned = srcp:
+                pkgs.lib.cleanSourceWith {
+                  filter = pkgs.lib.cleanSourceFilter;
+                  src = pkgs.lib.cleanSourceWith {
+                    filter = name: type: ! (type == "directory" &&
+                                            (baseNameOf name == "dist" ||
+                                             baseNameOf name == "dist-newstyle"));
+                    src = srcp;
+                  };
+                };
+          in { name = n; value = val; };
+        pathOvr = n: v: let x = 1;
+                        in { name = n; value = v; };
         hackageOvr = n: v: { name = n; value = v.version; };
         githubOvr = n: v:
           let ghsrc = githubSrcFetch ({ ref = "master"; } // v);
