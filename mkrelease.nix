@@ -33,7 +33,7 @@ let
     # Input argument f is a filter to apply to the input source overrides.
     #
     # The result is an attrset of pkgname to githubsrc (or other)
-    # source specification for every package no filtered out of the
+    # source specification for every package not filtered out of the
     # addSrcs set.
     let gittreesrcs =
             let
