@@ -109,17 +109,22 @@ let
                 pkgs.lib.cleanSourceWith {
                   filter = pkgs.lib.cleanSourceFilter;
                   src = pkgs.lib.cleanSourceWith {
-                    filter = name: type: ! (type == "directory" &&
-                                            (baseNameOf name == "dist" ||
-                                             baseNameOf name == "dist-newstyle"));
+                    filter = name: type: (no_cabal_output (builtins.trace name name) (builtins.trace type type) &&
+                                          no_cabalv2_output name type &&
+                                          no_cabal_env name type);
                     src = srcp;
                   };
                 };
+              no_cabal_output = name: type: ! (type == "directory" &&
+                                               baseNameOf name == "dist");
+              no_cabalv2_output = name: type: ! (type == "directory" &&
+                                                 baseNameOf name == "dist-newstyle");
+              no_cabal_env = name: type: ! (type == "regular" &&
+                                            startsWith ".ghc.environment." (baseNameOf name));
           in { name = n; value = val; };
-        pathOvr = n: v: let x = 1;
-                        in { name = n; value = v; };
+        pathOvr    = n: v: { name = n; value = v; };
         hackageOvr = n: v: { name = n; value = v.version; };
-        githubOvr = n: v:
+        githubOvr  = n: v:
           let ghsrc = githubSrcFetch ({ ref = "master"; } // v);
               isrc = hasDefAttr ghsrc srcs n;
               asPath = x: { string = x; path = /. + x; }."${builtins.typeOf x}";
