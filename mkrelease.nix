@@ -109,7 +109,7 @@ let
                 pkgs.lib.cleanSourceWith {
                   filter = pkgs.lib.cleanSourceFilter;
                   src = pkgs.lib.cleanSourceWith {
-                    filter = name: type: (no_cabal_output (builtins.trace name name) (builtins.trace type type) &&
+                    filter = name: type: (no_cabal_output name type &&
                                           no_cabalv2_output name type &&
                                           no_cabal_env name type);
                     src = srcp;
