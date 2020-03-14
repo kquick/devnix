@@ -102,7 +102,7 @@ let
                 let op = if builtins.typeOf i == "string" then stringOvr
                          else if builtins.typeOf i == "path" then stringOvr
                          else pathOvr;
-                in op n (plusSubpath i (builtins.trace (builtins.typeOf i) s));
+                in op n (plusSubpath i s);
           in withDefAttr loc srcs "${n}-src" inp_src;
         plusSubpath = pth: attrval:
           let pp = withDefAttr "" attrval "subpath" (p: "/" + p);
