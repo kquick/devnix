@@ -532,7 +532,9 @@ rec {
     # derivation names and surjectively convert those to something
     # that is safe.
     name:  # input string that may contain special characters
-    name;  # initial implementation does no work
+    let bad = [ "/" ];
+        good = [ "--" ];
+    in replacePrefix "." "-" (builtins.replaceStrings bad good name);
 
   # ----------------------------------------------------------------------
 
