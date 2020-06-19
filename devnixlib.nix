@@ -526,6 +526,14 @@ rec {
     in if ml > sl then false
        else builtins.substring (sl - ml) sl s == m;
 
+  makeSafeName =
+    # Function to take a name (e.g. a github branch name) that may
+    # contain characters that are not valid for hydra jobnames or
+    # derivation names and surjectively convert those to something
+    # that is safe.
+    name:  # input string that may contain special characters
+    name;  # initial implementation does no work
+
   # ----------------------------------------------------------------------
 
   recentHaskellHashes =
