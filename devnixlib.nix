@@ -96,6 +96,17 @@ rec {
     in map (n: f n set."${n}") names;
 
 
+  mapAttrValues =
+    # For every attribute in the input attrset, call a function with
+    # the attr name and value as arguments, updating the value in the
+    # original attrset with the returned value of the function.
+    f:   # function called with: attrname attrvalue
+    set: # input attrset to process
+    with builtins;
+    let names = attrNames set;
+    in builtins.listToAttrs (map (n: { name = n; value = f n set."${n}";}) names);
+
+
   filterAttrs =
     # Remove attributes from the set for which the supplied predicate
     # function returns false.
